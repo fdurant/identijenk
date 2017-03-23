@@ -17,7 +17,18 @@ ERR=$?
 if [ $ERR -eq 0 ]; then
   IP=$(sudo docker inspect -f {{.NetworkSettings.IPAddress}} jenkins_identidock_1)
   CODE=$(curl -sL -w "%{http_code}" $IP:9090/monster/bla -o /dev/null) || true
-  if [ $CODE -ne 200 ]; then
+  if [ $CODE -eq 200 ]; then
+    echo "Test passed - Tagging "
+    HASH=$(git rev-parse --short HEAD)
+    # Replace <reginald> with the fully qualified domain name used on page 107'
+    # This is the hostname on which the registry runs
+    sudo docker tag jenkins_identidock <reginald>:5000/amouat/identidock:$HASH
+    sudo docker tag jenkins_identidock <reginald>:5000/amouat/identidock:newest
+    echo "Pushing"
+    # sudo docker login -e me@me.com -u me -p me123
+    sudo docker push <reginald>:5000/amouat/identidock:$HASH
+    sudo docker push <reginald>:5000/amouat/identidock:newest
+  else
     echo "Site returned " $CODE
     ERR=1
   fi
